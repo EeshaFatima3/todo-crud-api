@@ -1,6 +1,6 @@
 # To-Do List CRUD API (FastAPI)
 
-A lightweight RESTful CRUD API built with Python and FastAPI for managing a to-do list in memory. Built for the FlyRank Week 2 Assignment.
+A lightweight RESTful CRUD API built with Python and FastAPI for managing a to-do list in memory. Built for the FlyRank Week 2 Assignment. The API provides complete CRUD operations with validation, error handling, and interactive Swagger documentation.
 
 ## How to Install & Run
 
