@@ -94,3 +94,37 @@ def get_task(id: int):
         )
 
     return dict(task)
+
+
+@app.post("/tasks", status_code=201)
+def create_task(task_data: dict):
+    title = task_data.get("title")
+
+    if not title or not str(title).strip():
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Title is required and cannot be empty"}
+        )
+
+    conn = get_db_connection()
+
+    cursor = conn.execute(
+        """
+        INSERT INTO tasks (title, done)
+        VALUES (?, ?)
+        """,
+        (str(title).strip(), 0)
+    )
+
+    new_id = cursor.lastrowid
+
+    conn.commit()
+
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (new_id,)
+    ).fetchone()
+
+    conn.close()
+
+    return dict(task)
