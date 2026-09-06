@@ -1,6 +1,7 @@
 import sqlite3
 
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 
 app = FastAPI(title="Task API", version="1.0")
 
@@ -60,3 +61,36 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/tasks")
+def get_tasks():
+    conn = get_db_connection()
+
+    tasks = conn.execute(
+        "SELECT * FROM tasks"
+    ).fetchall()
+
+    conn.close()
+
+    return [dict(task) for task in tasks]
+
+
+@app.get("/tasks/{id}")
+def get_task(id: int):
+    conn = get_db_connection()
+
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (id,)
+    ).fetchone()
+
+    conn.close()
+
+    if task is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    return dict(task)
