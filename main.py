@@ -1,7 +1,7 @@
 import sqlite3
 
 from fastapi import FastAPI
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 app = FastAPI(title="Task API", version="1.0")
 
@@ -49,7 +49,11 @@ def init_db():
 init_db()
 
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="API information",
+    description="Returns the Task API name, version, and available endpoints."
+)
 def read_root():
     return {
         "name": "Task API",
@@ -58,12 +62,20 @@ def read_root():
     }
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Health check",
+    description="Checks whether the API is running."
+)
 def health_check():
     return {"status": "ok"}
 
 
-@app.get("/tasks")
+@app.get(
+    "/tasks",
+    summary="Get all tasks",
+    description="Returns all tasks from the SQLite database."
+)
 def get_tasks():
     conn = get_db_connection()
 
@@ -76,7 +88,11 @@ def get_tasks():
     return [dict(task) for task in tasks]
 
 
-@app.get("/tasks/{id}")
+@app.get(
+    "/tasks/{id}",
+    summary="Get a task",
+    description="Returns a task by its ID."
+)
 def get_task(id: int):
     conn = get_db_connection()
 
@@ -96,7 +112,12 @@ def get_task(id: int):
     return dict(task)
 
 
-@app.post("/tasks", status_code=201)
+@app.post(
+    "/tasks",
+    status_code=201,
+    summary="Create a task",
+    description="Creates a new task in the SQLite database."
+)
 def create_task(task_data: dict):
     title = task_data.get("title")
 
@@ -128,3 +149,88 @@ def create_task(task_data: dict):
     conn.close()
 
     return dict(task)
+
+
+@app.put(
+    "/tasks/{id}",
+    summary="Update a task",
+    description="Updates the title and/or completion status of a task."
+)
+def update_task(id: int, task_data: dict):
+    conn = get_db_connection()
+
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (id,)
+    ).fetchone()
+
+    if task is None:
+        conn.close()
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    if "title" in task_data:
+        title = task_data["title"]
+
+        if not title or not str(title).strip():
+            conn.close()
+            return JSONResponse(
+                status_code=400,
+                content={"error": "Title cannot be empty"}
+            )
+
+        conn.execute(
+            "UPDATE tasks SET title = ? WHERE id = ?",
+            (str(title).strip(), id)
+        )
+
+    if "done" in task_data:
+        conn.execute(
+            "UPDATE tasks SET done = ? WHERE id = ?",
+            (bool(task_data["done"]), id)
+        )
+
+    conn.commit()
+
+    updated_task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (id,)
+    ).fetchone()
+
+    conn.close()
+
+    return dict(updated_task)
+
+
+@app.delete(
+    "/tasks/{id}",
+    status_code=204,
+    summary="Delete a task",
+    description="Deletes a task from the SQLite database."
+)
+def delete_task(id: int):
+    conn = get_db_connection()
+
+    task = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (id,)
+    ).fetchone()
+
+    if task is None:
+        conn.close()
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    conn.execute(
+        "DELETE FROM tasks WHERE id = ?",
+        (id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return Response(status_code=204)
