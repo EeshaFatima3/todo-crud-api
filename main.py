@@ -41,3 +41,26 @@ def get_task(id: int):
         )
 
     return task
+
+
+@app.post("/tasks", status_code=201)
+def create_task(task_data: dict):
+    title = task_data.get("title")
+
+    if not title or not str(title).strip():
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Title is required and cannot be empty"}
+        )
+
+    new_id = max([t["id"] for t in tasks_db], default=0) + 1
+
+    new_task = {
+        "id": new_id,
+        "title": str(title).strip(),
+        "done": False
+    }
+
+    tasks_db.append(new_task)
+
+    return new_task
