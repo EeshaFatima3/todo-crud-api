@@ -11,7 +11,11 @@ tasks_db = [
 ]
 
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="API information",
+    description="Returns the Task API name, version, and available endpoints."
+)
 def read_root():
     return {
         "name": "Task API",
@@ -20,17 +24,29 @@ def read_root():
     }
 
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Health check",
+    description="Checks whether the API is running."
+)
 def health_check():
     return {"status": "ok"}
 
 
-@app.get("/tasks")
+@app.get(
+    "/tasks",
+    summary="Get all tasks",
+    description="Returns all tasks."
+)
 def get_tasks():
     return tasks_db
 
 
-@app.get("/tasks/{id}")
+@app.get(
+    "/tasks/{id}",
+    summary="Get a task",
+    description="Returns a task by its ID. Returns 404 if the task does not exist."
+)
 def get_task(id: int):
     task = next((t for t in tasks_db if t["id"] == id), None)
 
@@ -43,7 +59,12 @@ def get_task(id: int):
     return task
 
 
-@app.post("/tasks", status_code=201)
+@app.post(
+    "/tasks",
+    status_code=201,
+    summary="Create a task",
+    description="Creates a new task. The title is required."
+)
 def create_task(task_data: dict):
     title = task_data.get("title")
 
@@ -66,7 +87,11 @@ def create_task(task_data: dict):
     return new_task
 
 
-@app.put("/tasks/{id}")
+@app.put(
+    "/tasks/{id}",
+    summary="Update a task",
+    description="Updates the title and/or completion status of an existing task."
+)
 def update_task(id: int, task_data: dict):
     task = next((t for t in tasks_db if t["id"] == id), None)
 
@@ -93,7 +118,12 @@ def update_task(id: int, task_data: dict):
     return task
 
 
-@app.delete("/tasks/{id}", status_code=204)
+@app.delete(
+    "/tasks/{id}",
+    status_code=204,
+    summary="Delete a task",
+    description="Deletes an existing task."
+)
 def delete_task(id: int):
     task = next((t for t in tasks_db if t["id"] == id), None)
 
